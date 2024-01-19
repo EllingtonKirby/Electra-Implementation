@@ -164,7 +164,7 @@ def run(run_name, ckpt):
 
     config = ElectraConfig(vocab_size = tokenizer.vocab_size, embedding_size=64, hidden_size=128)
     body = ElectraModel(config)
-    body.load_state_dict(torch.load(f'/checkpoints/full_run_1/{ckpt}'))
+    body.load_state_dict(torch.load(f'./checkpoints/full_run_1/{ckpt}'))
     head = LanguageIdHead(num_classes=20)
     model = ElectraForLanguageId(body, head)
 
