@@ -99,7 +99,6 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
         lr=lr,
         eps=1e-08,
     )
-    loss = nn.CrossEntropyLoss()
     list_train_loss = []
     list_val_loss = []
     list_val_acc = []
@@ -122,7 +121,7 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
             optimizer.zero_grad()
 
             predictions = model(input_ids, attention_masks)
-            loss = loss(predictions, labels.float())
+            loss = torch.nn.functional.cross_entropy(predictions, labels.float())
 
             loss.backward()
             
@@ -143,7 +142,7 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
                 )
                 
                 predictions = model(input_ids, attention_masks)
-                loss = loss(predictions, labels.float())
+                loss = torch.nn.functional.cross_entropy(predictions, labels.float())
 
                 model_accuracy = torch.mean((torch.argmax(predictions, dim=0) == labels)*1.)
                 val_acc += model_accuracy
