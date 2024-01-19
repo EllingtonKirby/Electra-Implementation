@@ -153,7 +153,7 @@ def train(generator, discriminator, n_epochs, train_dataloader, valid_dataloader
             train_loss += loss_g.item() + loss_d.item()
         list_train_loss.append(train_loss / len(train_dataloader))
         # ========== Validation ==========
-        if e%1 == 0:
+        if e%5 == 0:
             generator.eval()
             discriminator.eval()
             valid_loss = 0
