@@ -128,7 +128,7 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
             optimizer.step()
 
             train_loss += loss
-        list_train_loss.append(train_loss / len(train_dataloader))
+        list_train_loss.append(float(train_loss / len(train_dataloader)))
         # ========== Validation ==========
         if True:
             model.eval()
@@ -143,13 +143,15 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
                 
                 predictions = model(input_ids, attention_masks)
                 loss = torch.nn.functional.cross_entropy(predictions, labels.float())
-
+                
+                valid_loss += loss
+                
                 model_accuracy = torch.mean((torch.argmax(predictions, dim=0) == labels)*1.)
                 val_acc += model_accuracy
             
             val_acc /= len(valid_dataloader)
-            list_val_loss.append(valid_loss / len(valid_dataloader))
-            list_val_acc.append(val_acc)
+            list_val_loss.append(float(valid_loss / len(valid_dataloader)))
+            list_val_acc.append(float(val_acc))
         
         if list_val_loss[-1] < best_val_loss:
           best_val_loss = list_val_loss[-1]
