@@ -250,10 +250,10 @@ def run(run_name):
       json.dump(val_losses, f)
 
   with open(gen_acc_file, 'w') as f:
-      json.dump(gen_acc, f)
+      json.dump(gen_acc.to_list(), f)
 
   with open(disc_acc_file, 'w') as f:
-      json.dump(disc_acc, f)
+      json.dump(disc_acc.to_list(), f)
 
 
 if __name__=='__main__':
