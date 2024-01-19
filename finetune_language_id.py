@@ -1,21 +1,30 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from transformers import ElectraModel, ElectraConfig, DataCollatorForLanguageModeling, BertForMaskedLM, AutoTokenizer, DefaultDataCollator
+from transformers import ElectraModel, ElectraConfig, AutoTokenizer, DataCollatorWithPadding
 from datasets import load_dataset
 from tqdm import tqdm
 import os
 import json
 import argparse
 
+class DataCollator:
+    def __init__(self, tokenizer):
+        self.tokenizer = tokenizer
+
+    def __call__(self, batch):
+        
+        features = {
+            "input_ids": torch.tensor([f["input_ids"] for f in batch]),
+            "attention_mask": torch.tensor([f["attention_mask"] for f in batch]),
+            "labels": torch.tensor([f["labels"] for f in batch]),
+            "masked_ids": torch.tensor([f["masked_ids"] for f in batch]),
+        }
+        return features
+
 
 def get_dataloaders(tokenizer):
   dataset = load_dataset("papluca/language-identification")
-
-  def preprocess_function(examples):
-      return tokenizer(examples['text'], add_special_tokens=True)
-
-  # n_samples = 100  # the number of training example
 
   # We first shuffle the data !
   dataset = dataset.shuffle()
@@ -23,6 +32,16 @@ def get_dataloaders(tokenizer):
   # Select n_samples
   train_dataset = dataset['validation']
   valid_dataset = dataset['test']
+
+  labels = {label for label in dataset['validation']['labels']}
+  id2label = {idx:label for idx, label in enumerate(labels)}
+  label2id = {label:idx for idx, label in enumerate(labels)}
+
+  def preprocess_function(examples):
+      encoding = tokenizer(examples['text'], truncation=True, max_length=512)
+      encoding['label_ids'] = torch.tensor([label2id[key] for key in examples['labels']])
+      encoding['label_ids'] = torch.nn.functional.one_hot(encoding['label_ids'], num_classes=20)
+      return encoding
 
   # Tokenize the dataset
   train_dataset = train_dataset.map(
@@ -32,15 +51,15 @@ def get_dataloaders(tokenizer):
       preprocess_function, remove_columns=dataset["train"].column_names, batched=True,
   )
 
-  data_collator = DefaultDataCollator(tokenizer)
+  data_collator = DataCollatorWithPadding(tokenizer, max_length=512, padding='max_length')
 
   batch_size = 32
 
   train_dataloader = DataLoader(
-      train_dataset, batch_size=batch_size, collate_fn=data_collator, pin_memory=True, pin_memory_device='cuda:0'
+      train_dataset, batch_size=batch_size, collate_fn=data_collator,
   )
   valid_dataloader = DataLoader(
-      valid_dataset, batch_size=batch_size, collate_fn=data_collator, pin_memory=True, pin_memory_device='cuda:0'
+      valid_dataset, batch_size=batch_size, collate_fn=data_collator,
   )
   return train_dataloader, valid_dataloader
   
@@ -60,7 +79,7 @@ class LanguageIdHead(nn.Module):
         hidden_states = self.LayerNorm(hidden_states)
         hidden_states = self.dense_2(hidden_states)
 
-        return hidden_states
+        return hidden_states[:,0,:]
     
 class ElectraForLanguageId(nn.Module):
     """Complete Discriminator"""
@@ -69,8 +88,8 @@ class ElectraForLanguageId(nn.Module):
         self.discriminator_body = body
         self.discriminator_head = head
 
-    def forward(self, input):
-      output = self.discriminator_body(input).last_hidden_state
+    def forward(self, input, attention_masks):
+      output = self.discriminator_body(input, attention_masks).last_hidden_state
       output = self.discriminator_head(output)
       return output
 
@@ -95,15 +114,15 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
         # Tracking variables
         train_loss = 0
         for batch in tqdm(train_dataloader):
-            input_ids, _, labels =(
+            input_ids, attention_masks, labels =(
                 batch["input_ids"].cuda(),
                 batch["attention_mask"].cuda(),
                 batch["labels"].cuda(),
             )
             optimizer.zero_grad()
-            
-            predictions = model(input_ids)
-            loss = loss(predictions, labels)
+
+            predictions = model(input_ids, attention_masks)
+            loss = loss(predictions, labels.float())
 
             loss.backward()
             
@@ -117,16 +136,16 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
             valid_loss = 0
             val_acc = 0
             for batch in tqdm(valid_dataloader):
-                input_ids, _, labels =(
+                input_ids, attention_masks, labels =(
                     batch["input_ids"].cuda(),
                     batch["attention_mask"].cuda(),
                     batch["labels"].cuda(),
                 )
                 
-                predictions = model(input_ids)
-                loss = loss(predictions, labels)
+                predictions = model(input_ids, attention_masks)
+                loss = loss(predictions, labels.float())
 
-                model_accuracy = torch.mean((torch.argmax(predictions, dim=-1) == labels)*1.)
+                model_accuracy = torch.mean((torch.argmax(predictions, dim=0) == labels)*1.)
                 val_acc += model_accuracy
             
             val_acc /= len(valid_dataloader)
