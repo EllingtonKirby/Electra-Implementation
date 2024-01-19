@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
-from transformers import ElectraModel, ElectraConfig, DataCollatorForLanguageModeling, BertForMaskedLM, AutoTokenizer, DefaultDataCollator, DataCollat
+from transformers import ElectraModel, ElectraConfig, DataCollatorForLanguageModeling, BertForMaskedLM, AutoTokenizer, DefaultDataCollator
 from datasets import load_dataset
 from tqdm import tqdm
 import os
