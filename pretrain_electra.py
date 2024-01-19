@@ -180,11 +180,12 @@ def train(generator, discriminator, n_epochs, train_dataloader, valid_dataloader
                 discriminator_accuracy = torch.mean((torch.argmax(discriminator_predictions, dim=-1) == discriminator_labels)*1.)
                 val_gen_acc += generator_accuracy
                 val_disc_acc += discriminator_accuracy
+            
             val_gen_acc /= len(valid_dataloader)
             list_val_gen_acc.append(val_gen_acc)
             val_disc_acc /= len(valid_dataloader)
             list_val_dis_acc.append(val_disc_acc)
-        list_val_loss.append(valid_loss / len(valid_dataloader))
+            list_val_loss.append(valid_loss / len(valid_dataloader))
         if list_val_loss[-1] < best_val_loss:
           best_val_loss = list_val_loss[-1]
           generator_path = f"checkpoints/{run_name}/generator_epoch{e}_lr{lr}"
@@ -199,7 +200,7 @@ def train(generator, discriminator, n_epochs, train_dataloader, valid_dataloader
             "\n\t - Val gen acc: {:.4f}".format(val_gen_acc),
             "\n\t - Val disc acc: {:.4f}".format(val_disc_acc),
         )
-    return list_train_loss, list_val_loss, list_val_gen_acc, list_val_dis_acc
+    return list_train_loss, list_val_loss, [float(tensor) for tensor in list_val_gen_acc], [float(tensor) for tensor in list_val_dis_acc]
 
 def run(run_name):
   def create_folder(folder_path):
