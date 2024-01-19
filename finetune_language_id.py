@@ -66,12 +66,12 @@ class ElectraForLanguageId(nn.Module):
     """Complete Discriminator"""
     def __init__(self, body, head):
         super().__init__()
-        self.body = body
-        self.head = head
+        self.discriminator_body = body
+        self.discriminator_head = head
 
     def forward(self, input):
-      output = self.body(input).last_hidden_state
-      output = self.head(output)
+      output = self.discriminator_body(input).last_hidden_state
+      output = self.discriminator_head(output)
       return output
 
 def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5):
@@ -164,9 +164,9 @@ def run(run_name, ckpt):
 
     config = ElectraConfig(vocab_size = tokenizer.vocab_size, embedding_size=64, hidden_size=128)
     body = ElectraModel(config)
-    body.load_state_dict(torch.load(f'./checkpoints/full_run_1/{ckpt}'))
     head = LanguageIdHead(num_classes=20)
     model = ElectraForLanguageId(body, head)
+    model.load_state_dict(torch.load(f'./checkpoints/full_run_1/{ckpt}'), strict=False)
 
     train_dl, valid_dl = get_dataloaders(tokenizer=tokenizer)
 
