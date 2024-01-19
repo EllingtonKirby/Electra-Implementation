@@ -17,14 +17,16 @@ def get_dataloaders(tokenizer):
 
   print(len(dataset['train']))
 
-  n_samples = 100  # the number of training example
+  # n_samples = 100  # the number of training example
 
   # We first shuffle the data !
   dataset = dataset.shuffle()
 
   # Select n_samples
-  train_dataset = dataset['train'].select(range(n_samples))
-  valid_dataset = dataset['validation'].select(range(n_samples//5))
+  # train_dataset = dataset['train'].select(range(n_samples))
+  train_dataset = dataset['train']
+  # valid_dataset = dataset['validation'].select(range(n_samples//5))
+  valid_dataset = dataset['validation']
 
   # Tokenize the dataset
   train_dataset = train_dataset.map(
