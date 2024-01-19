@@ -51,14 +51,14 @@ class LanguageIdHead(nn.Module):
         super().__init__()
 
         self.LayerNorm = nn.LayerNorm(config.embedding_size, eps=config.layer_norm_eps)
-        self.dense = nn.Linear(config.hidden_size, config.embedding_size)
-        self.dense2 = nn.Linear(config.embedding_size, num_classes)
+        self.dense_1 = nn.Linear(config.hidden_size, config.embedding_size)
+        self.dense_2 = nn.Linear(config.embedding_size, num_classes)
 
     def forward(self, discriminator_hidden_states):
-        hidden_states = self.dense(discriminator_hidden_states)
+        hidden_states = self.dense_1(discriminator_hidden_states)
         hidden_states = torch.nn.GELU()(hidden_states)
         hidden_states = self.LayerNorm(hidden_states)
-        hidden_states = self.dense2(hidden_states)
+        hidden_states = self.dense_2(hidden_states)
 
         return hidden_states
     
