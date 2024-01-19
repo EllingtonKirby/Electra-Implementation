@@ -233,7 +233,7 @@ def run(run_name):
   train_losses, val_losses, gen_acc, disc_acc = train(
       generator=generator, 
       discriminator=discriminator, 
-      n_epochs=1, 
+      n_epochs=100, 
       train_dataloader=train_dl, 
       valid_dataloader=valid_dl, 
       tokenizer=tokenizer, 
