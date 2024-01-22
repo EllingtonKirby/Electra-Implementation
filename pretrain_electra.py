@@ -116,7 +116,7 @@ def train(generator, discriminator, n_epochs, train_dataloader, valid_dataloader
     best_val_loss = 10**50
     generator.cuda()
     discriminator.cuda()
-    for e in range(n_epochs):
+    for e in range(100, n_epochs):
         # ========== Training ==========
 
         # Set model to training mode
@@ -205,58 +205,61 @@ def train(generator, discriminator, n_epochs, train_dataloader, valid_dataloader
     return list_train_loss, list_val_loss, [float(tensor) for tensor in list_val_gen_acc], [float(tensor) for tensor in list_val_dis_acc]
 
 def run(run_name):
-  def create_folder(folder_path):
-    if not os.path.exists(folder_path):
-        os.makedirs(folder_path)
-        print(f"Folder '{folder_path}' created.")
-    else:
-        print(f"Folder '{folder_path}' already exists.")
+    def create_folder(folder_path):
+        if not os.path.exists(folder_path):
+            os.makedirs(folder_path)
+            print(f"Folder '{folder_path}' created.")
+        else:
+            print(f"Folder '{folder_path}' already exists.")
 
-  folder_path = f'checkpoints/{run_name}'
-  create_folder(folder_path)
-  folder_path = f'outputs/{run_name}'
-  create_folder(folder_path)
-  
-  model_ckpt = "papluca/xlm-roberta-base-language-detection"
-  tokenizer = AutoTokenizer.from_pretrained(model_ckpt)
+    folder_path = f'checkpoints/{run_name}'
+    create_folder(folder_path)
+    folder_path = f'outputs/{run_name}'
+    create_folder(folder_path)
+    
+    model_ckpt = "papluca/xlm-roberta-base-language-detection"
+    tokenizer = AutoTokenizer.from_pretrained(model_ckpt)
 
-  generator_config = ElectraConfig(vocab_size = tokenizer.vocab_size, embedding_size= 32, hidden_size = 64)
-  generator = BertForMaskedLM(config=generator_config)
+    generator_config = ElectraConfig(vocab_size = tokenizer.vocab_size, embedding_size= 32, hidden_size = 64)
+    generator = BertForMaskedLM(config=generator_config)
 
-  discriminator_config = ElectraConfig(vocab_size = tokenizer.vocab_size, embedding_size=64, hidden_size=128)
-  discriminator_body = ElectraModel(discriminator_config)
-  discriminator_head = DiscriminatorHead(discriminator_config)
-  discriminator = Discriminator(discriminator_body,discriminator_head)
+    discriminator_config = ElectraConfig(vocab_size = tokenizer.vocab_size, embedding_size=64, hidden_size=128)
+    discriminator_body = ElectraModel(discriminator_config)
+    discriminator_head = DiscriminatorHead(discriminator_config)
+    discriminator = Discriminator(discriminator_body,discriminator_head)
 
-  train_dl, valid_dl = get_dataloaders(tokenizer=tokenizer)
+    discriminator.load_state_dict(torch.load(f'./checkpoints/full_run_1/discriminator_epoch95_lr5e-05'), strict=False)
+    generator.load_state_dict(torch.load(f'./checkpoints/full_run_1/generator_epoch95_lr5e-05'), strict=False)
 
-  train_losses, val_losses, gen_acc, disc_acc = train(
-      generator=generator, 
-      discriminator=discriminator, 
-      n_epochs=100, 
-      train_dataloader=train_dl, 
-      valid_dataloader=valid_dl, 
-      tokenizer=tokenizer, 
-      run_name=run_name
-    )
-  
-  train_losses_file = f'{folder_path}/train_losses.json'
-  val_losses_file = f'{folder_path}/val_losses.json'
-  gen_acc_file = f'{folder_path}/gen_acc.json'
-  disc_acc_file = f'{folder_path}/disc_acc.json'
+    train_dl, valid_dl = get_dataloaders(tokenizer=tokenizer)
 
-  # Save to JSON files
-  with open(train_losses_file, 'w') as f:
-      json.dump(train_losses, f)
+    train_losses, val_losses, gen_acc, disc_acc = train(
+        generator=generator, 
+        discriminator=discriminator, 
+        n_epochs=1000, 
+        train_dataloader=train_dl, 
+        valid_dataloader=valid_dl, 
+        tokenizer=tokenizer, 
+        run_name=run_name
+        )
+    
+    train_losses_file = f'{folder_path}/train_losses.json'
+    val_losses_file = f'{folder_path}/val_losses.json'
+    gen_acc_file = f'{folder_path}/gen_acc.json'
+    disc_acc_file = f'{folder_path}/disc_acc.json'
 
-  with open(val_losses_file, 'w') as f:
-      json.dump(val_losses, f)
+    # Save to JSON files
+    with open(train_losses_file, 'w') as f:
+        json.dump(train_losses, f)
 
-  with open(gen_acc_file, 'w') as f:
-      json.dump(gen_acc, f)
+    with open(val_losses_file, 'w') as f:
+        json.dump(val_losses, f)
 
-  with open(disc_acc_file, 'w') as f:
-      json.dump(disc_acc, f)
+    with open(gen_acc_file, 'w') as f:
+        json.dump(gen_acc, f)
+
+    with open(disc_acc_file, 'w') as f:
+        json.dump(disc_acc, f)
 
 
 if __name__=='__main__':
