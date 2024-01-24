@@ -68,12 +68,11 @@ class LanguageIdHead(nn.Module):
     """Discriminator module for the generator, made up of two dense layers."""
     def __init__(self, config, num_classes):
         super().__init__()
-
         self.dense = nn.Linear(config.hidden_size, num_classes)
 
     def forward(self, discriminator_hidden_states):
-        hidden_states = torch.nn.functional.dropout(hidden_states, .01)
-        hidden_states = self.dense(discriminator_hidden_states)
+        hidden_states = torch.nn.functional.dropout(discriminator_hidden_states, .01)
+        hidden_states = self.dense(hidden_states)
 
         return hidden_states
     
