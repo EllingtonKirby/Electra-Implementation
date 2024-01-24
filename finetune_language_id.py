@@ -69,17 +69,13 @@ class LanguageIdHead(nn.Module):
     def __init__(self, config, num_classes):
         super().__init__()
 
-        self.LayerNorm = nn.LayerNorm(config.embedding_size, eps=config.layer_norm_eps)
-        self.dense_1 = nn.Linear(config.hidden_size, config.embedding_size)
-        self.dense_2 = nn.Linear(config.embedding_size, num_classes)
+        self.dense = nn.Linear(config.hidden_size, num_classes)
 
     def forward(self, discriminator_hidden_states):
-        hidden_states = self.dense_1(discriminator_hidden_states)
-        hidden_states = torch.nn.GELU()(hidden_states)
-        hidden_states = self.LayerNorm(hidden_states)
-        hidden_states = self.dense_2(hidden_states)
+        hidden_states = torch.nn.functional.dropout(hidden_states, .01)
+        hidden_states = self.dense(discriminator_hidden_states)
 
-        return hidden_states[:,0,:]
+        return hidden_states
     
 class ElectraForLanguageId(nn.Module):
     """Complete Discriminator"""
@@ -179,7 +175,7 @@ def run(run_name):
     body = ElectraModel(config)
     head = LanguageIdHead(config, num_classes=20)
     model = ElectraForLanguageId(body, head)
-    model.load_state_dict(torch.load(f'./checkpoints/full_run_1/discriminator_epoch95_lr5e-05'), strict=False)
+    model.load_state_dict(torch.load(f'./checkpoints/full_run_2/discriminator_epoch535_lr5e-05'), strict=False)
 
     train_dl, valid_dl = get_dataloaders(tokenizer=tokenizer)
 
