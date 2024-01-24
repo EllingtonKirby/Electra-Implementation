@@ -150,7 +150,7 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
                 val_acc /= len(valid_dataloader)
                 list_val_loss.append(float(valid_loss / len(valid_dataloader)))
                 list_val_acc.append(float(val_acc))
-                
+
         print(
             e,
             "\n\t - Train loss: {:.4f}".format(list_train_loss[-1]),
@@ -179,7 +179,7 @@ def run(run_name):
     body = ElectraModel(config)
     head = LanguageIdHead(config, num_classes=20)
     model = ElectraForLanguageId(body, head)
-    model.load_state_dict(torch.load(f'./checkpoints/full_run_2/discriminator_epoch535_lr5e-05'), strict=False)
+    model.load_state_dict(torch.load(f'./checkpoints/full_run_1/discriminator_epoch95_lr5e-05'), strict=False)
 
     train_dl, valid_dl = get_dataloaders(tokenizer=tokenizer)
 
