@@ -108,7 +108,6 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
 
         # Set model to training mode
         model.train()
-
         # Tracking variables
         train_loss = 0
         for batch in tqdm(train_dataloader):
@@ -129,10 +128,10 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
             train_loss += loss
         list_train_loss.append(float(train_loss / len(train_dataloader)))
         # ========== Validation ==========
-        if True:
-            model.eval()
-            valid_loss = 0
-            val_acc = 0
+        model.eval()
+        valid_loss = 0
+        val_acc = 0
+        with torch.no_grad():
             for batch in tqdm(valid_dataloader):
                 input_ids, attention_masks, labels =(
                     batch["input_ids"].cuda(),
@@ -148,14 +147,10 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
                 model_accuracy = torch.mean((torch.argmax(predictions, dim=0) == labels)*1.)
                 val_acc += model_accuracy
             
-            val_acc /= len(valid_dataloader)
-            list_val_loss.append(float(valid_loss / len(valid_dataloader)))
-            list_val_acc.append(float(val_acc))
-        
-        
-        model_path = f"checkpoints/{run_name}/model_epoch{e+1}_lr{lr}"
-        torch.save(model.state_dict(), model_path)
-
+                val_acc /= len(valid_dataloader)
+                list_val_loss.append(float(valid_loss / len(valid_dataloader)))
+                list_val_acc.append(float(val_acc))
+                
         print(
             e,
             "\n\t - Train loss: {:.4f}".format(list_train_loss[-1]),
@@ -196,6 +191,9 @@ def run(run_name):
         run_name=run_name
       )
     
+    model_path = f"checkpoints/{run_name}/model_epoch_10"
+    torch.save(model.state_dict(), model_path)
+
     train_losses_file = f'{folder_path}/train_losses.json'
     val_losses_file = f'{folder_path}/val_losses.json'
     acc_file = f'{folder_path}/gen_acc.json'
