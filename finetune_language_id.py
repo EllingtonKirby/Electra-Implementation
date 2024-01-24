@@ -65,19 +65,22 @@ def get_dataloaders(tokenizer):
   
 
 class LanguageIdHead(nn.Module):
-    """Discriminator module for the generator, made up of two dense layers."""
     def __init__(self, config, num_classes):
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, num_classes)
+        self.dense1 = nn.Linear(config.hidden_size, config.hidden_size)
+        self.activation = nn.Tanh()
+        self.dense2 = nn.Linear(config.hidden_size, num_classes)
 
-    def forward(self, discriminator_hidden_states):
-        hidden_states = torch.nn.functional.dropout(discriminator_hidden_states, .01)
-        hidden_states = self.dense(hidden_states)
+    def forward(self, hidden_states):
+        first_token_tensor = hidden_states[:, 0]
+        pooled_output = self.dense1(first_token_tensor)
+        pooled_output = self.activation(pooled_output)
+        hidden_states = torch.nn.functional.dropout(pooled_output, .01)
+        hidden_states = self.dense2(hidden_states)
 
         return hidden_states
     
 class ElectraForLanguageId(nn.Module):
-    """Complete Discriminator"""
     def __init__(self, body, head):
         super().__init__()
         self.discriminator_body = body
