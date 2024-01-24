@@ -82,11 +82,11 @@ class ElectraForLanguageId(nn.Module):
     def __init__(self, body, head):
         super().__init__()
         self.discriminator_body = body
-        self.discriminator_head = head
+        self.head = head
 
     def forward(self, input, attention_masks):
       output = self.discriminator_body(input, attention_masks).last_hidden_state
-      output = self.discriminator_head(output)
+      output = self.head(output)
       return output
 
 def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5):
