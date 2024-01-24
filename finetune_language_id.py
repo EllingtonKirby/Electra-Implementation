@@ -102,7 +102,6 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
     list_train_loss = []
     list_val_loss = []
     list_val_acc = []
-    best_val_loss = 10**50
     model.cuda()
     for e in range(n_epochs):
         # ========== Training ==========
@@ -153,10 +152,9 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
             list_val_loss.append(float(valid_loss / len(valid_dataloader)))
             list_val_acc.append(float(val_acc))
         
-        if list_val_loss[-1] < best_val_loss:
-          best_val_loss = list_val_loss[-1]
-          model_path =  f"checkpoints/{run_name}/model_epoch{e}_lr{lr}"
-          torch.save(model.state_dict(), model_path)
+        
+        model_path = f"checkpoints/{run_name}/model_epoch{e+1}_lr{lr}"
+        torch.save(model.state_dict(), model_path)
 
         print(
             e,
@@ -164,9 +162,9 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
             "\n\t - Val loss: {:.4f}".format(list_val_loss[-1]),
             "\n\t - Val acc: {:.4f}".format(val_acc),
         )
-    return list_train_loss, list_val_loss, [float(tensor) for tensor in list_val_acc],
+    return [float(tensor) for tensor in list_train_loss], [float(tensor) for tensor in list_val_loss], [float(tensor) for tensor in list_val_acc],
 
-def run(run_name, ckpt):
+def run(run_name):
     def create_folder(folder_path):
       if not os.path.exists(folder_path):
           os.makedirs(folder_path)
@@ -186,13 +184,13 @@ def run(run_name, ckpt):
     body = ElectraModel(config)
     head = LanguageIdHead(config, num_classes=20)
     model = ElectraForLanguageId(body, head)
-    model.load_state_dict(torch.load(f'./checkpoints/full_run_1/{ckpt}'), strict=False)
+    model.load_state_dict(torch.load(f'./checkpoints/full_run_2/discriminator_epoch535_lr5e-05'), strict=False)
 
     train_dl, valid_dl = get_dataloaders(tokenizer=tokenizer)
 
     train_losses, val_losses, acc = train(
         model=model,
-        n_epochs=3, 
+        n_epochs=10, 
         train_dataloader=train_dl, 
         valid_dataloader=valid_dl, 
         run_name=run_name
@@ -216,10 +214,8 @@ def run(run_name, ckpt):
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('run_name', type=str, help='the run name')
-    parser.add_argument('checkpoint', type=str, help='checkpoint name')
     
     args = parser.parse_args()
     run_name = args.run_name
-    ckpt = args.checkpoint
 
-    run(run_name, ckpt)
+    run(run_name)
