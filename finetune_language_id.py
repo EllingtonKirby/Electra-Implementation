@@ -114,7 +114,7 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
             optimizer.zero_grad()
 
             predictions = model(input_ids, attention_masks)
-            loss = torch.nn.functional.cross_entropy(predictions, labels.float())
+            loss = torch.nn.functional.cross_entropy(predictions.view(-1, 20), labels.view(-1))
 
             loss.backward()
             
@@ -135,7 +135,7 @@ def train(model, n_epochs, train_dataloader, valid_dataloader, run_name, lr=5e-5
                 )
                 
                 predictions = model(input_ids, attention_masks)
-                loss = torch.nn.functional.cross_entropy(predictions, labels.float())
+                loss = torch.nn.functional.cross_entropy(predictions.view(-1, 20), labels.view(-1))
                 
                 valid_loss += loss
                 
