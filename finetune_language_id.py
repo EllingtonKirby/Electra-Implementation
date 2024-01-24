@@ -183,7 +183,7 @@ def run(run_name):
 
     train_losses, val_losses, acc = train(
         model=model,
-        n_epochs=10, 
+        n_epochs=3, 
         train_dataloader=train_dl, 
         valid_dataloader=valid_dl, 
         run_name=run_name
